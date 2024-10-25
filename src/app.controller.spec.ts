@@ -15,7 +15,7 @@ describe('AppModule', () => {
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
-          envFilePath: '.env.test', // Separate environment file for tests if desired
+          envFilePath: '.env.test',
         }),
         MongooseModule.forRootAsync({
           imports: [ConfigModule],
@@ -33,7 +33,7 @@ describe('AppModule', () => {
   });
 
   afterAll(async () => {
-    await app.close(); // Clean up after tests
+    await app.close(); // Clean up
   });
 
   it('should be defined', () => {
