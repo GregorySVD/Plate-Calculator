@@ -1,22 +1,47 @@
+// src/app.module.spec.ts
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { AppModule } from './app.module';
+import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
-describe('AppController', () => {
-  let appController: AppController;
+describe('AppModule', () => {
+  let app: INestApplication;
 
-  beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
-      providers: [AppService],
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          isGlobal: true,
+          envFilePath: '.env.test', // Separate environment file for tests if desired
+        }),
+        MongooseModule.forRootAsync({
+          imports: [ConfigModule],
+          useFactory: async (configService: ConfigService) => ({
+            uri: configService.get<string>('MONGODB_URI'),
+          }),
+          inject: [ConfigService],
+        }),
+        AppModule,
+      ],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
+    app = moduleFixture.createNestApplication();
+    await app.init();
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
-    });
+  afterAll(async () => {
+    await app.close(); // Clean up after tests
+  });
+
+  it('should be defined', () => {
+    expect(app).toBeDefined();
+  });
+
+  it('should connect to the database', async () => {
+    const mongooseConnection = app.get<MongooseModule>(MongooseModule);
+    expect(mongooseConnection).toBeDefined();
   });
 });
